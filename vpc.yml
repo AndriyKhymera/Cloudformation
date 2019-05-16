@@ -1,0 +1,134 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description:
+  example of vpc
+# 
+# Metadata:
+  # template metadata
+# 
+Parameters:
+  cidr:
+    Type: String
+    #Default: '10.0.0.0/16'
+# 
+# Mappings:
+  # set of mappings
+# 
+# Conditions:
+  # set of conditions
+# 
+# Transform:
+  # set of transforms
+
+Resources:
+  vpc:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: !Ref cidr
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+      Tags: 
+        - Key: Name
+          Value: cloudFormation vpc example
+  Private1:  
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: us-east-2a
+      CidrBlock: 10.0.1.0/24
+      Tags: 
+        - Key: Name
+          Value: private1
+      VpcId: !Ref vpc
+      
+  Private2:  
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: us-east-2b
+      CidrBlock: 10.0.2.0/24
+      Tags: 
+        - Key: Name
+          Value: private2
+      VpcId: !Ref vpc
+
+  Public1:  
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: us-east-2a
+      CidrBlock: 10.0.10.0/24
+      Tags: 
+        - Key: Name
+          Value: public1
+      VpcId: !Ref vpc
+  
+  Public2:  
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: us-east-2b
+      CidrBlock: 10.0.20.0/24
+      Tags: 
+        - Key: Name
+          Value: public2
+      VpcId: !Ref vpc
+
+  internateGetaway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: internateGetawayCloudFormation
+
+  AttachmentInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref internateGetaway
+      VpcId: !Ref vpc
+
+  publicRouteTables:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref vpc
+      Tags: 
+        - Key: Name
+          Value: publicRouteTableCloudFormation
+
+  privateRouteTables:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref vpc
+      Tags:
+        - Key: Name
+          Value: privateRouteTableCloudFormation
+          
+  subnetPublicRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Public1
+      RouteTableId: !Ref publicRouteTables
+
+  subnetPublicRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Public2
+      RouteTableId: !Ref publicRouteTables
+  
+  subnetPrivateRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Private1
+      RouteTableId: !Ref privateRouteTables
+
+  subnetPrivateRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Private2
+      RouteTableId: !Ref privateRouteTables
+
+
+Outputs:
+ vpcId:
+    Description: Returns vpc id
+    Value: !Ref vpc
+    Export:
+      Name: vpcId
